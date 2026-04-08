@@ -90,10 +90,11 @@ gap 루프가 있었다면 (execution-review-r1.md 등 존재):
 
 ## Layer 2: Independent Verdict (독립 판정)
 
-**이 Layer가 이 스킬의 존재 이유다.**
+validated-plan은 에이전트를 분리(planner, critic, architect, executor)하지만, 정보 체인은 하나다. 앞 단계의 산출물이 뒷 단계의 입력이 되므로, Step 1에서 프레이밍이 잘못되면 이후 전체가 오염된다. 특히 기준 약화(validation v1→v2)는 같은 critic이 담당하므로 구조적으로 가능하다.
 
-validated-plan의 모든 내장 검증은 같은 실행 컨텍스트를 공유하므로 프레이밍 오염에 취약하다.
-Independent Verdict는 체인을 **완전히 우회**하고 원점에서 재판정한다.
+Independent Verdict는 이 계획-검증-실행 체인(Step 1~10)을 우회하고 재판정한다.
+
+Step 0의 오염까지 잡기 위해, validated-plan이 clarify 시작 전에 보존하는 `user-request-raw.md`(사용자 원문)를 "원래 의도"로 사용한다. clarify-result.md는 체인의 해석이므로 주지 않는다.
 
 ### 실행 방법
 
@@ -102,10 +103,11 @@ Agent(subagent_type="oh-my-claudecode:critic", model="opus")
 ```
 
 **이 agent에게 주는 것:**
-- `clarify-result.md` (원래 의도)
+- `user-request-raw.md` (사용자 원문 — 체인 해석 이전)
 - 최종 산출물 (execution-manifest.md에 나열된 실제 코드/파일)
 
 **이 agent에게 주지 않는 것:**
+- clarify-result.md (체인의 해석)
 - plan-v1.md, plan-v2.md
 - validation-v1.md, validation-v2.md
 - meta-evaluation.md
@@ -113,28 +115,33 @@ Agent(subagent_type="oh-my-claudecode:critic", model="opus")
 - plan-v1-review.md
 - gap-plan-r{N}.md
 
+**user-request-raw.md가 없는 경우:** validated-plan 구버전에서 실행된 태스크는 user-request-raw.md가 없을 수 있다. 이 경우 clarify-result.md를 대체 사용하되, 보고서에 "원문 부재 — clarify-result.md 사용 (Step 0 오염 미검증)"을 명시한다.
+
 **프롬프트:**
 
 ```
 너는 이 프로젝트의 실행 과정을 전혀 모른다.
-사용자의 원래 의도와 최종 결과물만 본다.
+사용자의 원래 요청과 최종 결과물만 본다.
 
-[clarify-result.md 경로]를 읽어라. 이것이 원래 의도다.
+[user-request-raw.md 경로]를 읽어라. 이것이 사용자가 처음 요청한 원문이다.
 [execution-manifest.md에 나열된 실제 변경 파일 경로들]을 읽어라. 이것이 최종 결과물이다.
 
-아래 3가지를 판정하라:
+아래 4가지를 판정하라:
 
-1. 명시적 성공 기준 충족
-   clarify-result의 "성공 기준" 섹션의 각 항목에 대해:
-   최종 결과물이 이 기준을 충족하는가? (PASS/FAIL + 근거)
+1. 원래 요청 충족
+   사용자 원문의 요청이 최종 결과물에서 달성됐는가? (PASS/FAIL + 근거)
 
-2. 암묵적 기대 충족
-   이 의도를 가진 사람이 당연히 기대하지만 명시하지 않은 것:
+2. 명시적 기대 충족
+   원문에서 명시적으로 요구한 각 항목에 대해:
+   최종 결과물이 이를 충족하는가? (PASS/FAIL + 근거)
+
+3. 암묵적 기대 충족
+   이 요청을 한 사람이 당연히 기대하지만 명시하지 않은 것:
    충족되는가? (PASS/FAIL + 근거)
    항목이 없으면 "식별된 암묵적 기대 없음"
 
-3. 과잉/이탈 산출물
-   최종 결과물에서 의도와 무관하거나 과잉인 것:
+4. 과잉/이탈 산출물
+   최종 결과물에서 원래 요청과 무관하거나 과잉인 것:
    있는가? (목록 + 왜 과잉인지)
    없으면 "과잉 산출물 없음"
 
