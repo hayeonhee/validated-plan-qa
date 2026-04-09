@@ -296,6 +296,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Audit a validated-plan run directory for final QA signals.")
     parser.add_argument("plan_dir", help="Path to .omc/plans/{task-slug}")
     parser.add_argument("--repo-root", default=".", help="Repository root used for manifest file checks")
+    parser.add_argument("--slug", default=None, help="Override slug (default: directory name). Useful for fixture testing.")
     args = parser.parse_args()
 
     plan_dir = Path(args.plan_dir).resolve()
@@ -306,7 +307,7 @@ def main() -> int:
         return 1
 
     findings: list[Finding] = []
-    slug = plan_dir.name
+    slug = args.slug if args.slug else plan_dir.name
 
     check_required_files(plan_dir, slug, findings)
     check_base_order(plan_dir, findings)

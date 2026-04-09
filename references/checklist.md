@@ -43,6 +43,19 @@
 - [ ] 불일치 시 구체적 분석 (체인이 놓친 것 / 체인이 과잉인 것)
 - [ ] Layer 1 오버라이드 해당 여부 확인
 
+## Rubric 적용
+
+- [ ] Layer 1-B 판정 전 `references/rubrics.md`의 해당 R-check 규칙과 사례를 읽었는가
+- [ ] 각 R-check 판정이 rubric의 PASS/FAIL/WARN 기준에 따르는가
+- [ ] Layer 1-C 판정이 rubric의 gap 루프 정직성 기준에 따르는가
+
+## 자기 강화
+
+- [ ] Layer 3에서 Layer 1과 Layer 2 불일치 발견 시 rubrics.md 사례란에 기록했는가
+- [ ] 사례 기록 후 같은 R-check에서 같은 교훈 3회 반복 여부를 확인했는가
+- [ ] 3회 반복 시 규칙에 반영하고 해당 사례를 삭제했는가
+- [ ] rubric 규칙 수정 후 fixture를 돌려 기대 결과가 나오는지 확인했는가
+
 ## Final Report
 
 - [ ] 3 Layer 결과 모두 포함
