@@ -1,0 +1,29 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "validated-plan-qa",
+  "description": "validated-plan 실행 결과에 대한 3-layer 사후 감사 스킬",
+  "owner": {
+    "name": "hayeonhee"
+  },
+  "plugins": [
+    {
+      "name": "validated-plan-qa",
+      "description": "validated-plan 실행 결과에 대한 3-layer 사후 감사: Chain Audit + Independent Verdict + Divergence Analysis.",
+      "version": "1.0.0",
+      "author": {
+        "name": "hayeonhee"
+      },
+      "source": "./",
+      "category": "qa",
+      "homepage": "https://github.com/hayeonhee/validated-plan-qa",
+      "tags": [
+        "qa",
+        "validation",
+        "validated-plan",
+        "audit",
+        "silent-failure"
+      ]
+    }
+  ],
+  "version": "1.0.0"
+}
