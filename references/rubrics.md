@@ -19,6 +19,23 @@ Layer 1-B(의미 참조 검증), Layer 1-C(gap 루프 정직성), Layer 2(독립
 - **FAIL**: 성공 기준 중 하나라도 validation-v2에 대응 항목 없이 누락됐다
 - **WARN**: 대응은 있으나 추상화 수준이 달라 매핑 충분성이 애매하다 (예: "사용성 개선" → "버튼 색 변경")
 
+### R-1b: execution-review 통합 경로 검증 (R-1 PASS 시에만)
+
+R-1이 "기준이 존재하는가"를 확인한다면, R-1b는 "그 기준으로 pass된 판정이 통합 경로를 검증했는가"를 확인한다.
+
+- **PASS**: execution-review의 각 pass 항목이 통합 경로(API→DB→UI 또는 해당 기능의 전체 데이터 흐름)를 근거로 판정했다
+- **FAIL**: pass 항목 중 하나라도 단위 수준(함수 존재, 타입 일치 등)만으로 판정되고, 실제 연결(import, 호출, 렌더링)이 미검증이다
+- **WARN**: 통합 경로 검증이 명시적이지 않으나, 산출물 코드에서 연결이 자명하게 추론된다
+
+검증 방법: execution-review에서 pass된 각 항목의 "근거" 컬럼을 읽고, 그 근거가 (1) 실제 파일 간 import/호출 관계를 포함하는지, (2) API 응답이 UI까지 전달되는 경로를 포함하는지, (3) 프론트엔드가 호출하는 API 엔드포인트의 라우트 파일이 실제로 존재하는지, (4) 여러 API가 같은 데이터를 다루는 경우 키/스키마가 일치하는지 확인한다.
+
+**API 간 정합성 검증 (R-1b-cross)**:
+- 프론트에서 `fetch('/api/...')` 호출이 있으면, 해당 라우트 파일 존재를 확인한다
+- 같은 도메인 데이터를 읽는 API(GET)와 쓰는 API(POST/PUT)가 있으면, 키/필드 목록이 일치하는지 교차 확인한다
+- 불일치 시 FAIL (예: GET이 2개 키, POST가 4개 키 → 저장 항상 실패)
+
+> **승격 근거**: MISSED-2026-04-09-001. coach-view-notification-ux에서 CompanyAlias DB 조회가 notifications route에서 누락(null 하드코딩), CompanyAliasManager가 mypage에 미연결(import 0건)이었으나, execution-review는 "함수 존재"만으로 pass 처리. coach-schedule-metrics에서도 추이 차트, weeklyTrend가 plan에 설계됐으나 미구현, 채널 키 불일치 버그를 체인이 놓침.
+
 ### 사례
 
 (Layer 3 불일치 시 추가)

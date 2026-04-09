@@ -227,7 +227,10 @@ def check_manifest(plan_dir: Path, repo_root: Path, findings: list[Finding]) -> 
     for path in sorted(mapped | changed | created):
         abs_path = (repo_root / path).resolve()
         if not abs_path.exists():
-            add_finding(findings, "WARN", "evidence-integrity", f"referenced file does not exist: {path}")
+            if path in created:
+                add_finding(findings, "FAIL", "evidence-integrity", f"manifest claims file was created but it does not exist: {path}")
+            else:
+                add_finding(findings, "WARN", "evidence-integrity", f"referenced file does not exist: {path}")
             continue
         if abs_path.stat().st_mtime > manifest_mtime + 1:
             add_finding(
@@ -252,6 +255,83 @@ def check_manifest(plan_dir: Path, repo_root: Path, findings: list[Finding]) -> 
             "evidence-integrity",
             "gap loop artifacts exist; verify execution-manifest was refreshed after gap execution, or revalidation may rely on stale evidence",
         )
+
+
+def check_manifest_vs_git(plan_dir: Path, repo_root: Path, findings: list[Finding]) -> None:
+    """Verify manifest claims against actual git history."""
+    manifest = plan_dir / "execution-manifest.md"
+    if not manifest.exists():
+        return
+
+    lines = read_text(manifest).splitlines()
+    created = {normalize_list_entry(line) for line in extract_section(lines, "## 새로 생성된 파일")}
+    changed = {normalize_list_entry(line) for line in extract_section(lines, "## 변경된 파일 목록")}
+    manifest_files = {f for f in (changed | created) if f}
+
+    if not manifest_files:
+        return
+
+    # Get files that actually have git history
+    for path in sorted(manifest_files):
+        abs_path = (repo_root / path).resolve()
+        if not abs_path.exists():
+            continue  # already caught by check_manifest
+        try:
+            result = subprocess.run(
+                ["git", "log", "--oneline", "-1", "--", path],
+                cwd=repo_root,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            if not result.stdout.strip():
+                add_finding(
+                    findings,
+                    "FAIL",
+                    "manifest-git-mismatch",
+                    f"manifest lists '{path}' but file has no git history — likely not committed or manually added to manifest",
+                )
+        except subprocess.CalledProcessError:
+            pass
+
+
+def check_cross_plan_overlap(plan_dir: Path, findings: list[Finding]) -> None:
+    """MISSED-002: Detect files modified by multiple plans (cross-plan regression risk)."""
+    manifest = plan_dir / "execution-manifest.md"
+    if not manifest.exists():
+        return
+
+    lines = read_text(manifest).splitlines()
+    my_changed = {normalize_list_entry(line) for line in extract_section(lines, "## 변경된 파일 목록")}
+    my_created = {normalize_list_entry(line) for line in extract_section(lines, "## 새로 생성된 파일")}
+    my_files = {f for f in (my_changed | my_created) if f}
+
+    if not my_files:
+        return
+
+    plans_root = plan_dir.parent
+    my_slug = plan_dir.name
+
+    for sibling in sorted(plans_root.iterdir()):
+        if not sibling.is_dir() or sibling.name == my_slug:
+            continue
+        sibling_manifest = sibling / "execution-manifest.md"
+        if not sibling_manifest.exists():
+            continue
+
+        sib_lines = read_text(sibling_manifest).splitlines()
+        sib_changed = {normalize_list_entry(line) for line in extract_section(sib_lines, "## 변경된 파일 목록")}
+        sib_created = {normalize_list_entry(line) for line in extract_section(sib_lines, "## 새로 생성된 파일")}
+        sib_files = {f for f in (sib_changed | sib_created) if f}
+
+        overlap = my_files & sib_files
+        for path in sorted(overlap):
+            add_finding(
+                findings,
+                "WARN",
+                "cross-plan-regression",
+                f"file also modified by plan '{sibling.name}': {path} — verify no regression",
+            )
 
 
 def check_structural_traceability(plan_dir: Path, findings: list[Finding]) -> None:
@@ -313,6 +393,8 @@ def main() -> int:
     check_base_order(plan_dir, findings)
     check_loop_consistency(plan_dir, findings)
     check_manifest(plan_dir, repo_root, findings)
+    check_manifest_vs_git(plan_dir, repo_root, findings)
+    check_cross_plan_overlap(plan_dir, findings)
     check_structural_traceability(plan_dir, findings)
 
     return print_report(findings, plan_dir)

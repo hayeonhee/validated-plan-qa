@@ -238,6 +238,58 @@ Layer 1과 Layer 2의 판정이 같은 영역에서 불일치하면, `references
 
 ---
 
+## CONDITIONAL PASS 해소 루프
+
+**Final Verdict가 CONDITIONAL PASS 또는 FAIL일 때, QA를 보고서 작성으로 끝내지 않는다.**
+Blocking finding이 해소될 때까지 아래 루프를 실행한다.
+
+### 트리거
+
+Final Verdict가 CONDITIONAL PASS 또는 FAIL이고, blocking finding(심각도 CRITICAL 또는 MAJOR)이 1건 이상 존재.
+
+### 루프
+
+```
+Final Verdict: CONDITIONAL PASS / FAIL
+        │
+        ▼
+  Blocking findings 목록 추출
+        │
+        ▼
+  사용자에게 보고 + 수정 여부 확인
+        │
+        ├── 사용자 "수정해" → 수정 실행 → 재검증 (Layer 2 재실행)
+        │                                    │
+        │                              PASS → 종료
+        │                              아직 blocking → 루프 반복
+        │
+        └── 사용자 "나중에" / "스킵" → QA 보고서에 "미해소" 기록 후 종료
+```
+
+### 재검증 방법
+
+수정 완료 후 **Layer 2(Independent Verdict)만 재실행**한다.
+- 전체 3-Layer를 다시 돌리지 않는다 (Layer 1은 체인 정합성이므로 수정과 무관)
+- 독립 판정이 PASS로 바뀌면 Final Verdict를 PASS로 갱신
+- 독립 판정이 여전히 PARTIAL/FAIL이면 남은 blocking finding을 보고하고 루프 반복
+
+### 보고서 갱신
+
+해소 완료 시 qa-report.md와 metadata.md를 갱신한다:
+```
+- final-verdict: CONDITIONAL PASS → PASS (resolved)
+- resolution-date: YYYY-MM-DD
+- resolved-findings: [목록]
+```
+
+미해소 종료 시:
+```
+- final-verdict: CONDITIONAL PASS (unresolved)
+- unresolved-findings: [목록]
+```
+
+---
+
 ## Learning Loop: 놓친 문제를 규칙으로 바꾸기
 
 3-Layer QA는 구조적 맹점이 있다. 이 루프는 QA가 놓친 문제를 **사후에 수집하고, 데이터가 쌓이면 규칙으로 승격**하는 메커니즘이다.
