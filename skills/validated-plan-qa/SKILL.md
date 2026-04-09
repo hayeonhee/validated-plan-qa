@@ -45,7 +45,7 @@ orchestration-silent-failure-inspector의 구조 검사를 흡수하고, 의미 
 ### 1-A. 스크립트 실행 (구조 검사)
 
 ```bash
-python3 ~/.claude/skills/validated-plan-qa/scripts/audit_validated_plan_run.py .omc/plans/{task-slug} --repo-root .
+python3 "${CLAUDE_PLUGIN_ROOT}/skills/validated-plan-qa/scripts/audit_validated_plan_run.py" .omc/plans/{task-slug} --repo-root .
 ```
 
 스크립트가 검사하는 것:

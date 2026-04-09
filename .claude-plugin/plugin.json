@@ -1,0 +1,20 @@
+{
+  "name": "validated-plan-qa",
+  "version": "1.0.0",
+  "description": "validated-plan 실행 결과에 대한 3-layer 사후 감사: Chain Audit + Independent Verdict + Divergence Analysis.",
+  "author": {
+    "name": "hayeonhee"
+  },
+  "homepage": "https://github.com/hayeonhee/validated-plan-qa",
+  "repository": "https://github.com/hayeonhee/validated-plan-qa",
+  "license": "MIT",
+  "keywords": [
+    "claude-code",
+    "plugin",
+    "skill",
+    "qa",
+    "validation",
+    "validated-plan"
+  ],
+  "skills": "./skills/"
+}

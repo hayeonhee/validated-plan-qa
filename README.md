@@ -2,6 +2,23 @@
 
 validated-plan이 "다 잘 됐어"라고 말할 때, 진짜 잘 된 건지 다시 확인하는 스킬.
 
+## 설치
+
+Claude Code에서 한 줄로:
+
+```
+/plugin install https://github.com/hayeonhee/validated-plan-qa.git
+```
+
+설치 후 validated-plan 실행이 끝난 프로젝트에서:
+
+```
+/validated-plan-qa 해줘
+```
+
+또는 "실행 끝난 거 QA" 같은 자연어 트리거로 호출됩니다.
+
+
 ## 왜 필요한가
 
 validated-plan은 자체적으로 검증을 한다. 계획을 세우고, 기준을 만들고, 실행하고, 결과를 평가한다.
